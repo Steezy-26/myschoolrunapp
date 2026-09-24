@@ -10,10 +10,14 @@ const { isTokenBlacklisted } = require("../utils/authHelpers");
 const User = db.users;
 const Role = db.role;
 
-const publicKey = fs.readFileSync(
-  path.join(__dirname, "../public.key"),
-  "utf8",
-);
+let publicKey;
+try {
+  publicKey = fs.readFileSync(path.join(__dirname, "../public.key"), "utf8");
+} catch (e) {
+  if (process.env.PUBLIC_KEY) {
+    publicKey = process.env.PUBLIC_KEY.replace(/\\n/g, "\n");
+  }
+}
 
 const opts = {
   jwtFromRequest: ExtractJWT.fromExtractors([

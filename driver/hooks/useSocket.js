@@ -71,6 +71,7 @@ import {
 } from "../lib/VehicleTrackingSlice";
 
 import { addMessage, incrementUnread, setTyping } from "../lib/MessagesSlice";
+import { addIncomingRequest, removeIncomingRequest } from "../lib/EmergencyRidesSlice";
 
 // ── Selectors ─────────────────────────────────────────────────────────────────
 const selectUser = (s) => s.auth?.user;
@@ -205,6 +206,19 @@ export default function useSocketRedux() {
       console.log("[Socket→Redux] route-assigned", payload);
     };
 
+    // ── Emergency Ride events ───────────────────────────────────────────────
+    const handleEmergencySelected = (payload) => {
+      console.log("[Socket→Redux] emergency-ride-selected", payload);
+      dispatch(addIncomingRequest(payload));
+    };
+
+    const handleEmergencyCancelled = (payload) => {
+      console.log("[Socket→Redux] emergency-ride-cancelled", payload);
+      if (payload?.id) {
+        dispatch(removeIncomingRequest(payload.id));
+      }
+    };
+
     // ── Messaging events ─────────────────────────────────────────────────────
     /**
      * "new-message" is NOT in the socketHandler — the server emits it via the
@@ -251,7 +265,11 @@ export default function useSocketRedux() {
     // new-message comes from the messages service, not socketHandler directly.
     // Use the raw socket for this one since we don't have a makeListeners pair yet.
     const rawSocket = getSocket();
-    if (rawSocket) rawSocket.on("new-message", handleNewMessage);
+    if (rawSocket) {
+      rawSocket.on("new-message", handleNewMessage);
+      rawSocket.on("emergency-ride-selected", handleEmergencySelected);
+      rawSocket.on("emergency-ride-cancelled", handleEmergencyCancelled);
+    }
 
     return () => {
       offVehicleLocationUpdate(handleLocationUpdate);
@@ -270,7 +288,11 @@ export default function useSocketRedux() {
       offRouteAssigned(handleRouteAssigned);
       offUserTyping(handleUserTyping);
       offMessageRead(handleMessageRead);
-      if (rawSocket) rawSocket.off("new-message", handleNewMessage);
+      if (rawSocket) {
+        rawSocket.off("new-message", handleNewMessage);
+        rawSocket.off("emergency-ride-selected", handleEmergencySelected);
+        rawSocket.off("emergency-ride-cancelled", handleEmergencyCancelled);
+      }
     };
   }, [user?.id, dispatch]);
 

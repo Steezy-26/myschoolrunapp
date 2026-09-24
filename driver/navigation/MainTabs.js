@@ -53,6 +53,13 @@ import AddVehicleScreen from "../screens/AddVehicleScreen";
 import EditVehicleScreen from "../screens/EditVehicleScreen";
 import VehicleDetailScreen from "../screens/VehicleDetailsScreen";
 import StudentListScreen from "../screens/StudentListScreen";
+import EmergencyRidesMenuScreen from "../screens/EmergencyRidesMenuScreen";
+import AvailabilityToggleScreen from "../screens/AvailabilityToggleScreen";
+import IncomingEmergencyRidesScreen from "../screens/IncomingEmergencyRidesScreen";
+import EmergencyRideDetailsScreen from "../screens/EmergencyRideDetailsScreen";
+import EmergencyRideTrackingScreen from "../screens/EmergencyRideTrackingScreen";
+import EmergencyRideHistoryScreen from "../screens/EmergencyRideHistoryScreen";
+import EmergencyRideRatingsScreen from "../screens/EmergencyRideRatingsScreen";
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -288,6 +295,15 @@ export default function MainTabs() {
       <Drawer.Screen name="ViewProfileScreen" component={ViewProfileScreen} />
       <Drawer.Screen name="StudentList" component={StudentListScreen} />
       <Drawer.Screen name="Requests" component={RequestsScreen} />
+
+      {/* Emergency Ride screens */}
+      <Drawer.Screen name="EmergencyRidesMenuScreen" component={EmergencyRidesMenuScreen} />
+      <Drawer.Screen name="AvailabilityToggleScreen" component={AvailabilityToggleScreen} />
+      <Drawer.Screen name="IncomingEmergencyRidesScreen" component={IncomingEmergencyRidesScreen} />
+      <Drawer.Screen name="EmergencyRideDetailsScreen" component={EmergencyRideDetailsScreen} />
+      <Drawer.Screen name="EmergencyRideTrackingScreen" component={EmergencyRideTrackingScreen} />
+      <Drawer.Screen name="EmergencyRideHistoryScreen" component={EmergencyRideHistoryScreen} />
+      <Drawer.Screen name="EmergencyRideRatingsScreen" component={EmergencyRideRatingsScreen} />
     </Drawer.Navigator>
   );
 }

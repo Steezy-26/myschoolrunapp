@@ -604,6 +604,31 @@ export default function useGuardianSocket() {
     onMessageRead(handleMessageRead);
     onGuardianRequestUpdate(handleGuardianRequestUpdate);
 
+    const rawSocket = getSocket();
+    const handleEmergencyLocation = (payload) => {
+      console.log("[GuardianSocket] emergency-location-update:", payload);
+      dispatch(
+        setVehicleLocation({
+          vehicleId: payload.vehicleId || `emergency-${payload.rideId}`,
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+          speed: payload.speed ?? 0,
+          heading: payload.heading ?? 0,
+          accuracy: payload.accuracy ?? 0,
+          timestamp: payload.timestamp,
+        }),
+      );
+    };
+
+    if (rawSocket) {
+      rawSocket.on("emergency-location-update", handleEmergencyLocation);
+      rawSocket.on("emergency-ride-accepted", (p) => console.log("emergency-ride-accepted", p));
+      rawSocket.on("emergency-ride-arriving", (p) => console.log("emergency-ride-arriving", p));
+      rawSocket.on("emergency-ride-picked-up", (p) => console.log("emergency-ride-picked-up", p));
+      rawSocket.on("emergency-ride-started", (p) => console.log("emergency-ride-started", p));
+      rawSocket.on("emergency-ride-completed", (p) => console.log("emergency-ride-completed", p));
+    }
+
     return () => {
       offVehicleLocationUpdate(handleLocationUpdate);
       offVehicleStarted(handleVehicleStarted);
@@ -622,6 +647,14 @@ export default function useGuardianSocket() {
       offUserTyping(handleUserTyping);
       offMessageRead(handleMessageRead);
       offGuardianRequestUpdate(handleGuardianRequestUpdate);
+      if (rawSocket) {
+        rawSocket.off("emergency-location-update", handleEmergencyLocation);
+        rawSocket.off("emergency-ride-accepted");
+        rawSocket.off("emergency-ride-arriving");
+        rawSocket.off("emergency-ride-picked-up");
+        rawSocket.off("emergency-ride-started");
+        rawSocket.off("emergency-ride-completed");
+      }
     };
   }, [user?.id, dispatch]); // note: currentConvoId intentionally NOT in deps (uses ref)
 

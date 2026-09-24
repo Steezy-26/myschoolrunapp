@@ -43,9 +43,27 @@ const hasActiveSubscription = async (guardianId) => {
   return Boolean(await getActiveSubscription(guardianId));
 };
 
-const hasActiveProSubscription = async (guardianId) => {
-  const subscription = await getActiveSubscription(guardianId);
-  return Boolean(subscription && isProPlan(subscription.plan));
+const hasActiveProSubscription = async (guardianOrId) => {
+  let guardian;
+  if (typeof guardianOrId === "object" && guardianOrId !== null) {
+    guardian = guardianOrId;
+  } else {
+    guardian = await Guardian.findByPk(guardianOrId);
+  }
+  if (!guardian) return false;
+
+  const subscription = await getActiveSubscription(guardian.id);
+  if (subscription && isProPlan(subscription.plan)) {
+    return true;
+  }
+
+  const legacyPro =
+    guardian.isSubscribed &&
+    guardian.subscriptionExpiresAt &&
+    new Date() < new Date(guardian.subscriptionExpiresAt) &&
+    ["pro", "premium"].includes(String(guardian.subscriptionPlan).toLowerCase());
+
+  return Boolean(legacyPro || guardian.canUseApp?.());
 };
 
 const requireProFeature = async (req, res, next) => {
@@ -63,7 +81,10 @@ const requireProFeature = async (req, res, next) => {
     }
 
     const subscription = await getActiveSubscription(guardian.id);
-    if (!subscription || !isProPlan(subscription.plan)) {
+    const hasDbSubscription = Boolean(subscription && isProPlan(subscription.plan));
+    const hasGuardianSub = await hasActiveProSubscription(guardian);
+
+    if (!hasDbSubscription && !hasGuardianSub) {
       return res.status(403).json({
         message: "A PRO subscription is required for this feature.",
         subscriptionRequired: true,
@@ -72,7 +93,10 @@ const requireProFeature = async (req, res, next) => {
     }
 
     req.guardian = guardian;
-    req.subscription = subscription;
+    req.subscription = subscription || {
+      status: "active",
+      plan: { name: guardian.subscriptionPlan || "pro" },
+    };
     return next();
   } catch (error) {
     console.error("PRO subscription check failed:", error);

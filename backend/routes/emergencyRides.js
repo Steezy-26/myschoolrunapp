@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const { passport, requireRole } = require("../config/passport");
 const { requireProFeature } = require("../services/subscriptionService");
 const {
@@ -17,6 +18,14 @@ const {
 const router = express.Router();
 const authenticate = passport.authenticate("jwt", { session: false });
 
+const emergencyRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 emergency requests per 15 minutes
+  message: { message: "Too many emergency ride requests. Please wait a few minutes before trying again." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ─── Guardian Operations ───────────────────────────────────────────────────────
 
 router.post(
@@ -24,6 +33,7 @@ router.post(
   authenticate,
   requireRole("guardian"),
   requireProFeature,
+  emergencyRequestLimiter,
   requestEmergencyRide,
 );
 
@@ -35,6 +45,8 @@ router.get(
   getAvailableDrivers,
 );
 
+const { rateEmergencyDriver } = require("../controllers/ratingController");
+
 router.post(
   "/:id/select-driver",
   authenticate,
@@ -43,13 +55,20 @@ router.post(
   selectDriver,
 );
 
+router.post(
+  "/:id/rate",
+  authenticate,
+  requireRole("guardian"),
+  requireProFeature,
+  rateEmergencyDriver,
+);
+
 // ─── Driver Operations (PHASE 9 & 10) ──────────────────────────────────────────
 
 router.post(
   "/:id/accept",
   authenticate,
   requireRole("driver"),
-  requireProFeature,
   acceptEmergencyRide,
 );
 
@@ -57,7 +76,6 @@ router.post(
   "/:id/reject",
   authenticate,
   requireRole("driver"),
-  requireProFeature,
   rejectEmergencyRide,
 );
 
@@ -65,7 +83,6 @@ router.post(
   "/:id/arriving",
   authenticate,
   requireRole("driver"),
-  requireProFeature,
   markDriverArriving,
 );
 
@@ -73,7 +90,6 @@ router.post(
   "/:id/pickup",
   authenticate,
   requireRole("driver"),
-  requireProFeature,
   markStudentPickedUp,
 );
 
@@ -81,7 +97,6 @@ router.post(
   "/:id/start",
   authenticate,
   requireRole("driver"),
-  requireProFeature,
   startTrip,
 );
 
@@ -89,7 +104,6 @@ router.post(
   "/:id/complete",
   authenticate,
   requireRole("driver"),
-  requireProFeature,
   completeTrip,
 );
 
@@ -98,8 +112,8 @@ router.post(
 router.post(
   "/:id/cancel",
   authenticate,
-  requireProFeature,
   cancelEmergencyRide,
 );
 
 module.exports = router;
+

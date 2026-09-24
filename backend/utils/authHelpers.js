@@ -9,15 +9,24 @@ const sendEmail = require("../middleware/emailTransporter");
 const User = db.users;
 require("dotenv").config();
 
-const privateKey = fs.readFileSync(
-  path.join(__dirname, "../private.key"),
-  "utf8",
-);
+let privateKey;
+let publicKey;
 
-const publicKey = fs.readFileSync(
-  path.join(__dirname, "../public.key"),
-  "utf8",
-);
+try {
+  privateKey = fs.readFileSync(path.join(__dirname, "../private.key"), "utf8");
+} catch (e) {
+  if (process.env.PRIVATE_KEY) {
+    privateKey = process.env.PRIVATE_KEY.replace(/\\n/g, "\n");
+  }
+}
+
+try {
+  publicKey = fs.readFileSync(path.join(__dirname, "../public.key"), "utf8");
+} catch (e) {
+  if (process.env.PUBLIC_KEY) {
+    publicKey = process.env.PUBLIC_KEY.replace(/\\n/g, "\n");
+  }
+}
 
 if (!privateKey || !publicKey) {
   throw new Error("Failed to load RSA keys");
