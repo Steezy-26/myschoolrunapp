@@ -420,11 +420,18 @@ export default function SetProfileScreen({ navigation }) {
         text2: "Your driver profile has been set up successfully.",
       });
 
-      // Navigate to SetRoute screen
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "SetRoute" }],
-      });
+      // FIX: previously called navigation.reset({ index: 0, routes: [{ name: "SetRoute" }] })
+      // here. That silently failed — at this exact moment App.js's Stack.Navigator
+      // still only has "SetProfile" mounted (profileComplete hasn't flipped to true
+      // in React state yet), so "SetRoute" isn't a registered route to reset to.
+      // React Navigation drops that reset call with no visible error, which is
+      // exactly why the screen stayed stale after a successful submit.
+      //
+      // No manual navigation needed — setDriverProfile's fulfilled case updates
+      // state.users.driverProfile, which flips App.js's `hasProfile`/`profileComplete`
+      // to true and re-renders the Stack.Navigator straight into "SetRoute"
+      // automatically. This mirrors the same fix already applied on the guardian
+      // app's route-creation screen.
     } catch (error) {
       Toast.show({
         type: "error",

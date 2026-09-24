@@ -366,9 +366,23 @@ export const authSlice = createSlice({
         state.error = null;
       })
       .addCase(verifyEmailVerification.fulfilled, (state, action) => {
-        state.verificationOTP = action.payload;
+        // FIX: previously only set state.verificationOTP = action.payload
+        // and never set isAuthenticated. OTPVerificationScreen.js's own
+        // comment says it relies entirely on App.js's state-driven
+        // navigator to advance past the OTP screen once isAuthenticated
+        // flips true — with that never actually happening here, the app
+        // silently stayed on the OTP screen after a successful
+        // verification, which read as "signup never navigates anywhere."
+        // action.payload is the verified user object (see this thunk's
+        // definition: `return response.data.user`), so it belongs in
+        // state.user, matching the LoginUser.fulfilled pattern above —
+        // not in state.verificationOTP, which should stay reserved for
+        // sendVerificationOTP/resendVerificationOTP's responses.
+        state.user = action.payload;
+        state.isAuthenticated = true;
         state.isLoading = false;
         state.error = null;
+        state.hasSelectedRoute = false;
       })
       .addCase(verifyEmailVerification.rejected, (state, action) => {
         state.error = action.payload;
