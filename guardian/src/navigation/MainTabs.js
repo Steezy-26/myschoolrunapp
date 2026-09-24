@@ -44,6 +44,8 @@ import EmergencyRideDetailsScreen from "../screens/EmergencyRideDetailsScreen";
 import DrawerContent from "./Drawer";
 import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
 import AddPaymentMethodScreen from "../screens/AddPaymentMethodScreen";
+import AboutLegalScreen from "../screens/AboutLegalScreen";
+import SupportScreen from "../screens/SupportScreen";
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -295,7 +297,9 @@ export default function MainTabs() {
       <Drawer.Screen name="EditProfile" component={EditProfileScreen} />
       <Drawer.Screen name="Security" component={SecurityScreen} />
       <Drawer.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
-      <Drawer.Screen name="AddPaymentMethod" component={AddPaymentMethodScreen} />   
+      <Drawer.Screen name="AddPaymentMethod" component={AddPaymentMethodScreen} />
+      <Drawer.Screen name="AboutLegalScreen" component={AboutLegalScreen} />
+      <Drawer.Screen name="SupportScreen" component={SupportScreen} />
     </Drawer.Navigator>
   );
 }

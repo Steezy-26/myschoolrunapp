@@ -648,6 +648,10 @@ const selectDriver = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io && driver.userId) {
+      req.io.to(`user-${driver.userId}`).emit("emergency-ride-selected", result);
+      req.io.to(`driver-${driver.id}`).emit("emergency-ride-selected", result);
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
@@ -737,6 +741,12 @@ const acceptEmergencyRide = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io) {
+      req.io.to(`emergency-ride-${ride.id}`).emit("emergency-ride-accepted", result);
+      if (result.guardian?.userId) {
+        req.io.to(`user-${result.guardian.userId}`).emit("emergency-ride-accepted", result);
+      }
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
@@ -813,6 +823,12 @@ const rejectEmergencyRide = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io) {
+      req.io.to(`emergency-ride-${ride.id}`).emit("emergency-ride-rejected", result);
+      if (result.guardian?.userId) {
+        req.io.to(`user-${result.guardian.userId}`).emit("emergency-ride-rejected", result);
+      }
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
@@ -905,6 +921,12 @@ const markDriverArriving = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io) {
+      req.io.to(`emergency-ride-${ride.id}`).emit("emergency-ride-arriving", result);
+      if (result.guardian?.userId) {
+        req.io.to(`user-${result.guardian.userId}`).emit("emergency-ride-arriving", result);
+      }
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
@@ -960,6 +982,12 @@ const markStudentPickedUp = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io) {
+      req.io.to(`emergency-ride-${ride.id}`).emit("emergency-ride-picked-up", result);
+      if (result.guardian?.userId) {
+        req.io.to(`user-${result.guardian.userId}`).emit("emergency-ride-picked-up", result);
+      }
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
@@ -1015,6 +1043,12 @@ const startTrip = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io) {
+      req.io.to(`emergency-ride-${ride.id}`).emit("emergency-ride-started", result);
+      if (result.guardian?.userId) {
+        req.io.to(`user-${result.guardian.userId}`).emit("emergency-ride-started", result);
+      }
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
@@ -1085,6 +1119,12 @@ const completeTrip = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io) {
+      req.io.to(`emergency-ride-${ride.id}`).emit("emergency-ride-completed", result);
+      if (result.guardian?.userId) {
+        req.io.to(`user-${result.guardian.userId}`).emit("emergency-ride-completed", result);
+      }
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
@@ -1172,6 +1212,15 @@ const cancelEmergencyRideRequest = async (req, res) => {
     await transaction.commit();
 
     const result = await EmergencyRide.findByPk(ride.id, { include: rideIncludes });
+    if (req.io) {
+      req.io.to(`emergency-ride-${ride.id}`).emit("emergency-ride-cancelled", result);
+      if (result.guardian?.userId) {
+        req.io.to(`user-${result.guardian.userId}`).emit("emergency-ride-cancelled", result);
+      }
+      if (result.driver?.userId) {
+        req.io.to(`user-${result.driver.userId}`).emit("emergency-ride-cancelled", result);
+      }
+    }
     return res.status(200).json(result);
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();

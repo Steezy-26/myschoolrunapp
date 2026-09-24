@@ -131,6 +131,27 @@ function initializeSocket(io) {
       console.log(`🚌 Driver ${driverId} left driver-${driverId} room`);
     });
 
+    // ── Emergency Ride Rooms & Real-Time Tracking ────────────────────────────
+    socket.on("join-emergency-ride", (rideId) => {
+      if (!rideId) return;
+      socket.join(`emergency-ride-${rideId}`);
+      console.log(`🚨 Socket ${socket.id} joined emergency-ride-${rideId} room`);
+    });
+
+    socket.on("leave-emergency-ride", (rideId) => {
+      if (!rideId) return;
+      socket.leave(`emergency-ride-${rideId}`);
+      console.log(`🚨 Socket ${socket.id} left emergency-ride-${rideId} room`);
+    });
+
+    socket.on("emergency-location-update", (payload) => {
+      if (!payload?.rideId) return;
+      io.to(`emergency-ride-${payload.rideId}`).emit("emergency-location-update", payload);
+      if (payload.guardianUserId) {
+        io.to(`user-${payload.guardianUserId}`).emit("emergency-location-update", payload);
+      }
+    });
+
     // ── Driver Events (broadcast to guardians) ───────────────────────────────
 
     // When driver starts the trip

@@ -33,6 +33,8 @@ const guardianrequests = require("./routes/guardianRequests");
 const subscriptions = require("./routes/subscriptions");
 const driverServices = require("./routes/driverServices");
 const emergencyRides = require("./routes/emergencyRides");
+const ratings = require("./routes/ratings");
+const adminEmergency = require("./routes/adminEmergencyRoutes");
 // ── Real-time handlers ────────────────────────────────────────────────────────
 const { initializeSocket } = require("./socket/socketHandler");
 const { initializePeer } = require("./socket/peerHandler");
@@ -193,6 +195,8 @@ app.use("/api/guardian-requests", guardianrequests);
 app.use("/api/subscriptions", subscriptions);
 app.use("/api/driver-services", driverServices);
 app.use("/api/emergency-rides", emergencyRides);
+app.use("/api/ratings", ratings);
+app.use("/api/admin/emergency-rides", adminEmergency);
 
 // ── SPA fallback (must be after API routes) ──────────────────────────────────
 app.get(/^(?!\/api\/).*$/, (req, res) => {

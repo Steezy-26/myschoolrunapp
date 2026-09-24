@@ -7,6 +7,7 @@ import vehicleTrackingReducer from "../lib/VehicleTrackingSlice";
 import messagesReducer from "../lib/MessagesSlice";
 import guardianRequestReducer from "../lib/GuardianRequestsSlice";
 import notificationsReducer from "../lib/NotificationsSlice";
+import emergencyRidesReducer from "../lib/EmergencyRidesSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   messages: messagesReducer,
   guardianRequests: guardianRequestReducer,
   notifications: notificationsReducer,
+  emergencyRides: emergencyRidesReducer,
 });
 
 export const store = configureStore({

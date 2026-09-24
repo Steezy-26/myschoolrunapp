@@ -231,6 +231,14 @@ export default function DrawerContent({ navigation }) {
             options (mirrors how Support / About & Legal already worked). */}
         <Section T={T}>
           <DrawerItem
+            icon="flash-outline"
+            label="Emergency Rides"
+            subtitle="Alternative driver requests & pricing"
+            onPress={() => goTo("EmergencyRidesMenuScreen")}
+            T={T}
+          />
+          <Divider T={T} />
+          <DrawerItem
             icon="bus-outline"
             label="Vehicle"
             subtitle="Live location, maintenance & documents"

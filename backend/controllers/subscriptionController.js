@@ -154,6 +154,19 @@ const subscribePlan = async (req, res) => {
       { transaction },
     );
 
+    // Keep legacy guardian table columns synchronized with UserSubscription
+    const normalizedPlanName = plan.name.toLowerCase() === "pro" ? "premium" : plan.name.toLowerCase();
+    const validPlan = ["basic", "family", "premium"].includes(normalizedPlanName) ? normalizedPlanName : "premium";
+    
+    await guardian.update(
+      {
+        isSubscribed: true,
+        subscriptionPlan: validPlan,
+        subscriptionExpiresAt: endDate,
+      },
+      { transaction },
+    );
+
     await transaction.commit();
 
     try {
