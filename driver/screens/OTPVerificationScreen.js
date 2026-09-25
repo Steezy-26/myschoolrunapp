@@ -10,6 +10,9 @@ import {
   Animated,
   Keyboard,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
@@ -272,11 +275,7 @@ export default function OTPVerificationScreen({ navigation, route }) {
   const remainingAttempts = MAX_OTP_ATTEMPTS - attempts;
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      activeOpacity={1}
-      onPress={Keyboard.dismiss}
-    >
+    <View style={styles.container}>
       {/* Background glow */}
       <View style={styles.glowTop} />
 
@@ -288,145 +287,164 @@ export default function OTPVerificationScreen({ navigation, route }) {
         <Ionicons name="chevron-back" size={20} color="#fff" />
       </TouchableOpacity>
 
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        {/* Icon */}
-        <View style={styles.iconWrapper}>
-          <LinearGradient colors={["#3a0a0a", "#1a0505"]} style={styles.iconBg}>
-            <Ionicons name="shield-checkmark" size={36} color="#e83030" />
-          </LinearGradient>
-          <View style={styles.iconRing} />
-        </View>
-
-        <Text style={styles.title}>Verification Code</Text>
-        <Text style={styles.subtitle}>We've sent a 6-digit code to</Text>
-        <Text style={styles.emailText}>{maskedEmail}</Text>
-
-        {/* Attempts remaining */}
-        {attempts > 0 && (
-          <Text
-            style={[
-              styles.attemptsText,
-              remainingAttempts <= 2 && styles.attemptsWarning,
-            ]}
-          >
-            {remainingAttempts} attempt{remainingAttempts !== 1 ? "s" : ""}{" "}
-            remaining
-          </Text>
-        )}
-
-        {/* Error message */}
-        {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
-
-        {/* OTP inputs */}
-        <Animated.View
-          style={[styles.otpRow, { transform: [{ translateX: shakeAnim }] }]}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          onScrollBeginDrag={Keyboard.dismiss}
         >
-          {otp.map((digit, i) => (
-            <TextInput
-              key={i}
-              ref={(r) => (inputRefs.current[i] = r)}
-              style={[
-                styles.otpInput,
-                digit ? styles.otpInputFilled : null,
-                errorMessage ? styles.otpInputError : null,
-              ]}
-              value={digit}
-              onChangeText={(t) => handleChange(t, i)}
-              onKeyPress={(e) => handleKeyPress(e, i)}
-              keyboardType="number-pad"
-              maxLength={1}
-              selectTextOnFocus
-              caretHidden
-              editable={!isLoading && !isVerifying}
-            />
-          ))}
-        </Animated.View>
+          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+            {/* Icon */}
+            <View style={styles.iconWrapper}>
+              <LinearGradient
+                colors={["#3a0a0a", "#1a0505"]}
+                style={styles.iconBg}
+              >
+                <Ionicons name="shield-checkmark" size={36} color="#e83030" />
+              </LinearGradient>
+              <View style={styles.iconRing} />
+            </View>
 
-        {/* Timer & Resend */}
-        <View style={styles.timerRow}>
-          {isLoading || isVerifying ? (
-            <ActivityIndicator size="small" color="#e83030" />
-          ) : canResend ? (
-            <TouchableOpacity
-              onPress={handleResend}
-              disabled={isLoading || isVerifying}
-            >
-              <Text style={styles.resendActive}>Resend Code</Text>
-            </TouchableOpacity>
-          ) : (
-            <Text style={styles.timerText}>
-              Resend code in{" "}
-              <Text style={styles.timerCount}>
-                00:{timer.toString().padStart(2, "0")}
+            <Text style={styles.title}>Verification Code</Text>
+            <Text style={styles.subtitle}>We've sent a 6-digit code to</Text>
+            <Text style={styles.emailText}>{maskedEmail}</Text>
+
+            {/* Attempts remaining */}
+            {attempts > 0 && (
+              <Text
+                style={[
+                  styles.attemptsText,
+                  remainingAttempts <= 2 && styles.attemptsWarning,
+                ]}
+              >
+                {remainingAttempts} attempt{remainingAttempts !== 1 ? "s" : ""}{" "}
+                remaining
               </Text>
-            </Text>
-          )}
-        </View>
-
-        {/* Verify Button */}
-        <TouchableOpacity
-          onPress={handleVerify}
-          activeOpacity={0.85}
-          style={styles.verifyBtn}
-          disabled={isLoading || isVerifying || !isComplete}
-        >
-          <LinearGradient
-            colors={
-              isComplete && !isLoading && !isVerifying
-                ? ["#e83030", "#c01818"]
-                : ["#2a2a2a", "#1e1e1e"]
-            }
-            style={styles.verifyBtnGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <Text
-              style={[
-                styles.verifyBtnText,
-                (!isComplete || isLoading || isVerifying) &&
-                  styles.verifyBtnTextDim,
-              ]}
-            >
-              {isVerifying
-                ? "Verifying..."
-                : isLoading
-                  ? "Please wait..."
-                  : "Verify & Continue"}
-            </Text>
-            {!isLoading && !isVerifying && (
-              <Ionicons
-                name="arrow-forward"
-                size={18}
-                color={isComplete ? "#fff" : "rgba(255,255,255,0.3)"}
-              />
             )}
-          </LinearGradient>
-        </TouchableOpacity>
 
-        {/* Change Email */}
-        <TouchableOpacity
-          style={styles.changeRow}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.changeText}>
-            Wrong email?{"  "}
-            <Text style={styles.changeLink}>Change Email</Text>
-          </Text>
-        </TouchableOpacity>
+            {/* Error message */}
+            {errorMessage && (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            )}
 
-        {/* Security Note */}
-        <View style={styles.securityNote}>
-          <Ionicons
-            name="lock-closed"
-            size={12}
-            color="rgba(255,255,255,0.25)"
-          />
-          <Text style={styles.securityText}>
-            Code expires in 10 minutes. Do not share it.
-          </Text>
-        </View>
-      </Animated.View>
-    </TouchableOpacity>
+            {/* OTP inputs */}
+            <Animated.View
+              style={[styles.otpRow, { transform: [{ translateX: shakeAnim }] }]}
+            >
+              {otp.map((digit, i) => (
+                <TextInput
+                  key={i}
+                  ref={(r) => (inputRefs.current[i] = r)}
+                  style={[
+                    styles.otpInput,
+                    digit ? styles.otpInputFilled : null,
+                    errorMessage ? styles.otpInputError : null,
+                  ]}
+                  value={digit}
+                  onChangeText={(t) => handleChange(t, i)}
+                  onKeyPress={(e) => handleKeyPress(e, i)}
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  selectTextOnFocus
+                  caretHidden
+                  editable={!isLoading && !isVerifying}
+                />
+              ))}
+            </Animated.View>
+
+            {/* Timer & Resend */}
+            <View style={styles.timerRow}>
+              {isLoading || isVerifying ? (
+                <ActivityIndicator size="small" color="#e83030" />
+              ) : canResend ? (
+                <TouchableOpacity
+                  onPress={handleResend}
+                  disabled={isLoading || isVerifying}
+                >
+                  <Text style={styles.resendActive}>Resend Code</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.timerText}>
+                  Resend code in{" "}
+                  <Text style={styles.timerCount}>
+                    00:{timer.toString().padStart(2, "0")}
+                  </Text>
+                </Text>
+              )}
+            </View>
+
+            {/* Verify Button */}
+            <TouchableOpacity
+              onPress={handleVerify}
+              activeOpacity={0.85}
+              style={styles.verifyBtn}
+              disabled={isLoading || isVerifying || !isComplete}
+            >
+              <LinearGradient
+                colors={
+                  isComplete && !isLoading && !isVerifying
+                    ? ["#e83030", "#c01818"]
+                    : ["#2a2a2a", "#1e1e1e"]
+                }
+                style={styles.verifyBtnGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text
+                  style={[
+                    styles.verifyBtnText,
+                    (!isComplete || isLoading || isVerifying) &&
+                      styles.verifyBtnTextDim,
+                  ]}
+                >
+                  {isVerifying
+                    ? "Verifying..."
+                    : isLoading
+                      ? "Please wait..."
+                      : "Verify & Continue"}
+                </Text>
+                {!isLoading && !isVerifying && (
+                  <Ionicons
+                    name="arrow-forward"
+                    size={18}
+                    color={isComplete ? "#fff" : "rgba(255,255,255,0.3)"}
+                  />
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Change Email */}
+            <TouchableOpacity
+              style={styles.changeRow}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.changeText}>
+                Wrong email?{"  "}
+                <Text style={styles.changeLink}>Change Email</Text>
+              </Text>
+            </TouchableOpacity>
+
+            {/* Security Note */}
+            <View style={styles.securityNote}>
+              <Ionicons
+                name="lock-closed"
+                size={12}
+                color="rgba(255,255,255,0.25)"
+              />
+              <Text style={styles.securityText}>
+                Code expires in 10 minutes. Do not share it.
+              </Text>
+            </View>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -460,6 +478,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
   },
   content: {
     flex: 1,
