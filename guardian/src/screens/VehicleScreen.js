@@ -1,4 +1,4 @@
-// screens/guardian/VehicleScreen.js
+// screens/VehicleScreen.js  (guardian app)
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  ScrollView,
 } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useDispatch, useSelector } from "react-redux";
@@ -44,8 +43,6 @@ function VehicleGroupCard({
   const route = firstStudent?.vehicleRoute;
   const vehicle = route?.vehicle;
   const driver = vehicle?.driver?.user;
-
-  console.log("DRIVER", driver);
 
   // ── Unassigned students ──────────────────────────────────────────────────
   if (routeId === "unassigned" || !vehicle) {
@@ -197,9 +194,14 @@ function VehicleGroupCard({
               { backgroundColor: T.accent, borderColor: T.accent },
             ]}
             onPress={() => {
-              navigation.navigate("Messages", {
-                screen: "NewConversation",
-                params: { userId: driver.id },
+              // "Messages" is a tab inside MainTabs, so go through it
+              // explicitly instead of relying on the drawer finding it.
+              navigation.navigate("MainTabs", {
+                screen: "Messages",
+                params: {
+                  screen: "NewConversation",
+                  params: { userId: driver.id },
+                },
               });
             }}
           >
@@ -285,7 +287,10 @@ export default function VehicleScreen({ navigation }) {
           </Text>
           <TouchableOpacity
             style={[styles.primaryBtn, { backgroundColor: T.accent }]}
-            onPress={() => navigation.navigate("AddStudent")}
+            onPress={() =>
+              // AddStudent lives inside StudentsStack, not at drawer level
+              navigation.navigate("StudentsStack", { screen: "AddStudent" })
+            }
           >
             <Text style={styles.primaryBtnText}>Add Student</Text>
           </TouchableOpacity>
@@ -295,23 +300,22 @@ export default function VehicleScreen({ navigation }) {
   }
 
   // ── Main view ─────────────────────────────────────────────────────────────
+  // OptionsScreenContainer is already a ScrollView, so pull-to-refresh is
+  // passed through it rather than nesting a second ScrollView.
   return (
-    <OptionsScreenContainer>
+    <OptionsScreenContainer
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={T.accent}
+        />
+      }
+    >
       <OptionsScreenHeader title="Vehicles & Routes" />
 
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 20 },
-        ]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={T.accent}
-          />
-        }
-        showsVerticalScrollIndicator={false}
+      <View
+        style={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
       >
         {routeIds.map((routeId) => (
           <VehicleGroupCard
@@ -324,9 +328,7 @@ export default function VehicleScreen({ navigation }) {
             T={T}
           />
         ))}
-
-        <View style={{ height: 20 }} />
-      </ScrollView>
+      </View>
     </OptionsScreenContainer>
   );
 }
@@ -334,13 +336,17 @@ export default function VehicleScreen({ navigation }) {
 // ── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  center: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
   scrollContent: { paddingHorizontal: 16, paddingTop: 12 },
 
   emptyContainer: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 60,
     paddingHorizontal: 32,
     gap: 12,
   },

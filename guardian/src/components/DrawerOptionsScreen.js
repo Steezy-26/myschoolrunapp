@@ -1,4 +1,9 @@
-import React from "react";
+// components/DrawerOptionsScreen.js
+// Shared building blocks for every screen that a grouped drawer item opens
+// (Vehicle, Students, History, Account, Settings, Support, About & Legal).
+// Keeping this in one place means each screen file only has to describe
+// *what* rows it shows, not how a row/header/section looks.
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -6,20 +11,118 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  BackHandler,
 } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { useNavigation } from "@react-navigation/native";
+import {
+  useNavigation,
+  useFocusEffect,
+  DrawerActions,
+} from "@react-navigation/native";
 import { useTheme } from "../contexts/ThemeContext";
 
-// Full-screen wrapper: background + scroll container
-export default function OptionsScreenContainer({ children }) {
+// ── Back navigation ───────────────────────────────────────────────────────────
+// Returns a handler that:
+//   1. closes the drawer if it happens to be open (hardware back / swipe case)
+//   2. pops a nested stack screen if there is one underneath
+//   3. otherwise goes back through the drawer's history and, if the screen was
+//      opened from the side menu, reopens the menu after landing.
+// Screens opened from somewhere else (e.g. the Home route pill) pass
+// `fromDrawer: false`, so back just returns to where they came from.
+export function useBackToMenu() {
+  const navigation = useNavigation();
+
+  return useCallback(() => {
+    const ownState = navigation.getState();
+
+    // Find the drawer navigator that owns this screen (it may be the direct
+    // parent, or one level up when the screen lives in a nested stack).
+    let drawerNav = navigation;
+    while (drawerNav && drawerNav.getState()?.type !== "drawer") {
+      drawerNav = drawerNav.getParent();
+    }
+
+    // 1) Drawer currently open → just close it.
+    if (drawerNav) {
+      const openEntry = (drawerNav.getState().history ?? []).some(
+        (h) => h.type === "drawer",
+      );
+      if (openEntry) {
+        drawerNav.dispatch(DrawerActions.closeDrawer());
+        return;
+      }
+    }
+
+    // 2) Nested stack with screens underneath → simple pop.
+    if (ownState?.type === "stack" && ownState.index > 0) {
+      navigation.goBack();
+      return;
+    }
+
+    // No drawer above us: plain back.
+    if (!drawerNav) {
+      if (navigation.canGoBack()) navigation.goBack();
+      return;
+    }
+
+    // 3) Leaving a drawer screen.
+    const drawerState = drawerNav.getState();
+    const focusedRoute = drawerState.routes[drawerState.index];
+    const cameFromDrawer = focusedRoute?.params?.fromDrawer === true;
+
+    // Work out where "back" will land, so the menu only reopens when we land
+    // on the main tabs.
+    const routeEntries = (drawerState.history ?? []).filter(
+      (h) => h.type === "route",
+    );
+    const prevKey = routeEntries[routeEntries.length - 2]?.key;
+    const prevName = drawerState.routes.find((r) => r.key === prevKey)?.name;
+    const landsOnTabs = !prevName || prevName === "MainTabs";
+
+    if (drawerNav.canGoBack()) {
+      drawerNav.goBack();
+    } else {
+      drawerNav.navigate("MainTabs");
+    }
+
+    if (cameFromDrawer && landsOnTabs) {
+      requestAnimationFrame(() =>
+        drawerNav.dispatch(DrawerActions.openDrawer()),
+      );
+    }
+  }, [navigation]);
+}
+
+// Android hardware back button → same behaviour as the on-screen back arrow.
+export function useHardwareBackToMenu() {
+  const goBackToMenu = useBackToMenu();
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        goBackToMenu();
+        return true;
+      });
+      return () => sub.remove();
+    }, [goBackToMenu]),
+  );
+}
+
+// ── Layout pieces ─────────────────────────────────────────────────────────────
+
+// Full-screen wrapper: background + scroll container.
+// Pass `refreshControl` to enable pull-to-refresh on the whole screen.
+export default function OptionsScreenContainer({ children, refreshControl }) {
   const { theme: T } = useTheme();
+  useHardwareBackToMenu();
+
   return (
     <View style={[styles.container, { backgroundColor: T.bg }]}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
       >
         {children}
       </ScrollView>
@@ -30,11 +133,11 @@ export default function OptionsScreenContainer({ children }) {
 // Back button + title, standard on every sub-screen
 export function OptionsScreenHeader({ title }) {
   const { theme: T } = useTheme();
-  const navigation = useNavigation();
+  const goBackToMenu = useBackToMenu();
   return (
     <View style={[styles.header, { borderBottomColor: T.border }]}>
       <TouchableOpacity
-        onPress={() => navigation.goBack()}
+        onPress={goBackToMenu}
         style={styles.backBtn}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
@@ -115,6 +218,9 @@ export function OptionRow({
   );
 }
 
+// Plain-text block for legal/info screens (a heading + paragraph). Renders
+// inside OptionsScreenContainer just like OptionsSection does, but for
+// prose rather than tappable rows.
 export function TextBlock({ heading, children }) {
   const { theme: T } = useTheme();
   return (

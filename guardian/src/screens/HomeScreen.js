@@ -1,4 +1,4 @@
-// screens/guardian/GuardianHomeScreen.js
+// screens/HomeScreen.js  (guardian app)
 import React, {
   useEffect,
   useMemo,
@@ -557,9 +557,13 @@ export default function HomeScreen({ navigation }) {
           <Ionicons name="menu" size={22} color={T.text} />
         </TouchableOpacity>
 
+        {/* fromDrawer: false → back on Vehicle returns here instead of
+            reopening the side menu (this screen wasn't opened from the menu) */}
         <TouchableOpacity
           style={[styles.routePill, { backgroundColor: T.mapOverlay }]}
-          onPress={() => navigation.navigate("VehicleScreen")}
+          onPress={() =>
+            navigation.navigate("VehicleScreen", { fromDrawer: false })
+          }
         >
           <Ionicons name="bus" size={13} color={T.accent} />
           <Text

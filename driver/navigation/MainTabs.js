@@ -332,3 +332,4 @@ const tabStyles = (T) =>
     },
     badgeText: { fontSize: 9, fontWeight: "700", color: "#fff" },
   });
+  

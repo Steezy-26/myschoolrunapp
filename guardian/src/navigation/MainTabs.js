@@ -1,12 +1,12 @@
 // navigation/MainTabs.js
-import React, { useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useTheme } from "../contexts/ThemeContext";
 
 // Tab Screens
@@ -29,6 +29,8 @@ import AccountScreen from "../screens/AccountScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import PaymentScreen from "../screens/PaymentScreen";
 import NotificationsSettingsScreen from "../screens/NotificationsSettingsScreen";
+import MapSettingsScreen from "../screens/MapSettingsScreen";
+import DataUsageScreen from "../screens/DataUsageScreen";
 import SecurityScreen from "../screens/SecurityScreen";
 import EditProfileScreen from "../screens/EditProfileScreen";
 import EmergencyRideScreen from "../screens/EmergencyRideScreen";
@@ -51,7 +53,6 @@ const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 const StudentsStackNav = createNativeStackNavigator();
 const MessagesStackNav = createNativeStackNavigator();
-const TrackingStackNav = createNativeStackNavigator();
 const EmergencyRideStackNav = createNativeStackNavigator();
 
 // ── Nested Stacks ─────────────────────────────────────────────────────────────
@@ -168,6 +169,8 @@ function TabsNavigator() {
 
   return (
     <Tab.Navigator
+      initialRouteName="Home"
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -266,12 +269,17 @@ function TabsNavigator() {
 }
 
 // ── Drawer Navigator ─────────────────────────────────────────────────────────
+// backBehavior="history": back returns to the screen the user actually came
+// from (with the tab they left still selected) instead of jumping to the
+// first route, which is what was sending everyone to Home.
 
 export default function MainTabs() {
   const { theme: T } = useTheme();
 
   return (
     <Drawer.Navigator
+      initialRouteName="MainTabs"
+      backBehavior="history"
       drawerContent={(props) => <DrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
@@ -293,11 +301,19 @@ export default function MainTabs() {
         name="NotificationsSettingsScreen"
         component={NotificationsSettingsScreen}
       />
+      <Drawer.Screen name="MapSettingsScreen" component={MapSettingsScreen} />
+      <Drawer.Screen name="DataUsageScreen" component={DataUsageScreen} />
       <Drawer.Screen name="StudentsStack" component={StudentsStack} />
       <Drawer.Screen name="EditProfile" component={EditProfileScreen} />
       <Drawer.Screen name="Security" component={SecurityScreen} />
-      <Drawer.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
-      <Drawer.Screen name="AddPaymentMethod" component={AddPaymentMethodScreen} />
+      <Drawer.Screen
+        name="TransactionHistory"
+        component={TransactionHistoryScreen}
+      />
+      <Drawer.Screen
+        name="AddPaymentMethod"
+        component={AddPaymentMethodScreen}
+      />
       <Drawer.Screen name="AboutLegalScreen" component={AboutLegalScreen} />
       <Drawer.Screen name="SupportScreen" component={SupportScreen} />
     </Drawer.Navigator>

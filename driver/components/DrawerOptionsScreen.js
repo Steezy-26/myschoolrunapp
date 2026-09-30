@@ -1,9 +1,7 @@
 // components/DrawerOptionsScreen.js
 // Shared building blocks for every screen that a grouped drawer item opens
 // (Vehicle, Students, History, Account, Settings, Support, About & Legal).
-// Keeping this in one place means each screen file only has to describe
-// *what* rows it shows, not how a row/header/section looks.
-import React from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -11,14 +9,69 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  BackHandler,
 } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { useNavigation } from "@react-navigation/native";
+import {
+  useNavigation,
+  useFocusEffect,
+  DrawerActions,
+} from "@react-navigation/native";
 import { useTheme } from "../contexts/ThemeContext";
 
-// Full-screen wrapper: background + scroll container
+// Back = return to where the user came from, then reopen the side menu
+// (only when we're leaving a drawer screen back to the tabs).
+function useBackToMenu() {
+  const navigation = useNavigation();
+
+  return useCallback(() => {
+    const state = navigation.getState();
+    const isDrawerScreen = state?.type === "drawer";
+
+    // Screen lives inside a nested stack: just pop it, don't touch the drawer.
+    if (!isDrawerScreen) {
+      if (navigation.canGoBack()) navigation.goBack();
+      return;
+    }
+
+    // Work out where "back" will land so we only reopen the menu when
+    // returning to the main tabs.
+    const routeEntries = (state.history ?? []).filter(
+      (h) => h.type === "route",
+    );
+    const prevKey = routeEntries[routeEntries.length - 2]?.key;
+    const prevName = state.routes.find((r) => r.key === prevKey)?.name;
+    const landsOnTabs = !prevName || prevName === "MainTabs";
+
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate("MainTabs");
+    }
+
+    if (landsOnTabs) {
+      requestAnimationFrame(() =>
+        navigation.dispatch(DrawerActions.openDrawer()),
+      );
+    }
+  }, [navigation]);
+}
+
+// Full-screen wrapper: background + scroll container + hardware back handling
 export default function OptionsScreenContainer({ children }) {
   const { theme: T } = useTheme();
+  const goBackToMenu = useBackToMenu();
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        goBackToMenu();
+        return true;
+      });
+      return () => sub.remove();
+    }, [goBackToMenu]),
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: T.bg }]}>
       <ScrollView
@@ -35,11 +88,11 @@ export default function OptionsScreenContainer({ children }) {
 // Back button + title, standard on every sub-screen
 export function OptionsScreenHeader({ title }) {
   const { theme: T } = useTheme();
-  const navigation = useNavigation();
+  const goBackToMenu = useBackToMenu();
   return (
     <View style={[styles.header, { borderBottomColor: T.border }]}>
       <TouchableOpacity
-        onPress={() => navigation.goBack()}
+        onPress={goBackToMenu}
         style={styles.backBtn}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
@@ -120,9 +173,7 @@ export function OptionRow({
   );
 }
 
-// Plain-text block for legal/info screens (a heading + paragraph). Renders
-// inside OptionsScreenContainer just like OptionsSection does, but for
-// prose rather than tappable rows.
+// Plain-text block for legal/info screens (a heading + paragraph).
 export function TextBlock({ heading, children }) {
   const { theme: T } = useTheme();
   return (
@@ -210,3 +261,4 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 });
+

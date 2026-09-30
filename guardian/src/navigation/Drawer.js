@@ -1,4 +1,4 @@
-// navigation/GuardianDrawer.js
+// navigation/Drawer.js  (imported by MainTabs.js as "./Drawer")
 import React from "react";
 import {
   View,
@@ -95,9 +95,12 @@ export default function GuardianDrawerContent({ navigation }) {
   const displayName =
     user?.fullname || guardianProfile?.user?.fullname || "Guardian";
 
-  const goTo = (screen) => {
+  // `fromDrawer: true` tells the destination screen it was opened from the
+  // side menu, so its back button can reopen the menu (see useBackToMenu in
+  // components/DrawerOptionsScreen.js).
+  const goTo = (screen, params) => {
     navigation.dispatch(DrawerActions.closeDrawer());
-    navigation.navigate(screen);
+    navigation.navigate(screen, { ...params, fromDrawer: true });
   };
 
   const goToTab = (tabScreen, params) => {
@@ -198,7 +201,9 @@ export default function GuardianDrawerContent({ navigation }) {
             icon="car-outline"
             label="Emergency Ride History"
             subtitle="Past emergency rides & ratings"
-            onPress={() => goTo("EmergencyRideHistory")}
+            onPress={() =>
+              goTo("EmergencyRide", { screen: "EmergencyRideHistory" })
+            }
             T={T}
           />
           <Divider T={T} />

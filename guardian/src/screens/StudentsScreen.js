@@ -1,4 +1,4 @@
-// screens/guardian/StudentsScreen.js
+// screens/StudentsScreen.js  (guardian app)
 import React, { useEffect, useState } from "react";
 import {
   Text,
@@ -14,11 +14,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { useTheme } from "../contexts/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getGuardianStudents } from "../lib/UserSlice";
+import {
+  useBackToMenu,
+  useHardwareBackToMenu,
+} from "../components/DrawerOptionsScreen";
 
 export default function StudentsScreen({ navigation }) {
   const { theme: T } = useTheme();
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
+
+  // Back arrow + Android hardware back: return to where the user came from
+  // and reopen the side menu if they opened this screen from it.
+  const goBackToMenu = useBackToMenu();
+  useHardwareBackToMenu();
 
   const { students, isLoading } = useSelector((state) => state.users);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,7 +113,7 @@ export default function StudentsScreen({ navigation }) {
       >
         <TouchableOpacity
           style={[styles.backBtn, { backgroundColor: T.surface }]}
-          onPress={() => navigation.goBack()}
+          onPress={goBackToMenu}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons name="chevron-back" size={20} color={T.text} />

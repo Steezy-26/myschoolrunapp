@@ -1,18 +1,11 @@
-// screens/guardian/HistoryScreen.js
-import React, { useState, useEffect } from "react";
-import {
-  Text,
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  FlatList,
-  RefreshControl,
-} from "react-native";
+// screens/HistoryScreen.js  (guardian app)
+import React, { useState } from "react";
+import { Text, StyleSheet, View, RefreshControl } from "react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useTheme } from "../contexts/ThemeContext";
-import { useDispatch } from "react-redux";
-import {
-  OptionsScreenContainer,
+// OptionsScreenContainer is the DEFAULT export of DrawerOptionsScreen.js —
+// importing it inside the { } braces gives `undefined` and crashes the screen.
+import OptionsScreenContainer, {
   OptionsScreenHeader,
   OptionsSection,
   OptionsSectionLabel,
@@ -60,9 +53,8 @@ const MOCK_HISTORY = [
   },
 ];
 
-export default function HistoryScreen({ navigation }) {
+export default function HistoryScreen() {
   const { theme: T } = useTheme();
-  const dispatch = useDispatch();
 
   const [refreshing, setRefreshing] = useState(false);
   const [history, setHistory] = useState(MOCK_HISTORY);
@@ -95,8 +87,12 @@ export default function HistoryScreen({ navigation }) {
     }
   };
 
-  const renderHistoryItem = ({ item }) => (
+  const completedCount = history.filter((h) => h.status === "completed").length;
+  const cancelledCount = history.filter((h) => h.status === "cancelled").length;
+
+  const renderHistoryItem = (item) => (
     <View
+      key={item.id}
       style={[
         styles.historyCard,
         { backgroundColor: T.surface, borderColor: T.border },
@@ -151,7 +147,15 @@ export default function HistoryScreen({ navigation }) {
   );
 
   return (
-    <OptionsScreenContainer>
+    <OptionsScreenContainer
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={T.accent}
+        />
+      }
+    >
       <OptionsScreenHeader title="Trip History" />
 
       {/* Summary Section */}
@@ -173,10 +177,10 @@ export default function HistoryScreen({ navigation }) {
         <OptionRow
           icon="checkmark-circle-outline"
           label="Completed"
-          subtitle={`${history.filter((h) => h.status === "completed").length} trips`}
+          subtitle={`${completedCount} trips`}
           rightElement={
             <Text style={[styles.countText, { color: T.success }]}>
-              {history.filter((h) => h.status === "completed").length}
+              {completedCount}
             </Text>
           }
         />
@@ -186,30 +190,21 @@ export default function HistoryScreen({ navigation }) {
         <OptionRow
           icon="close-circle-outline"
           label="Cancelled"
-          subtitle={`${history.filter((h) => h.status === "cancelled").length} trips`}
+          subtitle={`${cancelledCount} trips`}
           rightElement={
             <Text style={[styles.countText, { color: "#ef4444" }]}>
-              {history.filter((h) => h.status === "cancelled").length}
+              {cancelledCount}
             </Text>
           }
         />
       </OptionsSection>
 
-      {/* History List */}
+      {/* History List — plain map instead of a FlatList, because the
+          container is already a ScrollView (nested lists break scrolling
+          and pull-to-refresh) */}
       <OptionsSectionLabel label="Recent Trips" />
-      <FlatList
-        data={history}
-        keyExtractor={(item) => item.id}
-        renderItem={renderHistoryItem}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={T.accent}
-          />
-        }
-        ListEmptyComponent={
+      <View style={styles.listContent}>
+        {history.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={[styles.emptyIcon, { backgroundColor: T.accentDim }]}>
               <Ionicons name="time-outline" size={40} color={T.accent} />
@@ -221,8 +216,10 @@ export default function HistoryScreen({ navigation }) {
               Trips will appear here once your child starts their journey
             </Text>
           </View>
-        }
-      />
+        ) : (
+          history.map(renderHistoryItem)
+        )}
+      </View>
     </OptionsScreenContainer>
   );
 }
