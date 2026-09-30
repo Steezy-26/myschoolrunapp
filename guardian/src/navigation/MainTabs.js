@@ -48,6 +48,8 @@ import TransactionHistoryScreen from "../screens/TransactionHistoryScreen";
 import AddPaymentMethodScreen from "../screens/AddPaymentMethodScreen";
 import AboutLegalScreen from "../screens/AboutLegalScreen";
 import SupportScreen from "../screens/SupportScreen";
+import LanguageScreen from "../screens/LanguageScreen";
+
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -316,6 +318,7 @@ export default function MainTabs() {
       />
       <Drawer.Screen name="AboutLegalScreen" component={AboutLegalScreen} />
       <Drawer.Screen name="SupportScreen" component={SupportScreen} />
+      <Drawer.Screen name="LanguageScreen" component={LanguageScreen} />
     </Drawer.Navigator>
   );
 }
